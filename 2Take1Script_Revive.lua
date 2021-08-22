@@ -1448,9 +1448,9 @@ history.add_players = function()
                 m.add.a('Were they a modder?', history_parent, function()
                         local scid = history.players[i]['scid']
                         if not m.t['log_modder_flags'].on then
-                            n("Enable 'Log Modder Flags' in Misc -> Dev Tools", nc.r)
+                            n("Enable 'Log Modder Flags' in Utility -> Logs", nc.r)
                         elseif not modder_player[scid] then
-                            n('He was not flagged with any Modder-Flags', nc.y)
+                            n('They were not flagged with any Modder-Flags', nc.y)
                         else
                             for y = 1, #flags_int do
                                 if modder_player[scid][flags_int[y]] then
