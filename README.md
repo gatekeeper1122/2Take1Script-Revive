@@ -694,7 +694,8 @@ _2t1s_weapons = {
 
 ## Known Issues
 
-- After disabling **2Take1Script-Parent**, you have to reload the script
+- After disabling **2Take1Script-Parent**, you have to reload the script.
+- Loading the script after using `Reset State` may result in the script activating features on it own, this is a lua api bug and cannot be fixed by me. Reinjecting the menu will temporarly fix it.
 - Too many **Custom Vehicles / PEDs / Objects** may cause issues! Just delete them after use.
 - Some features won't work properly if the distance between you and the target is too high.
 - When the script gets autoloaded (for example, with an `autoexec.lua`), the **Event Listeners** (Chat features, etc) might not work.
