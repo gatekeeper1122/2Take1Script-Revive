@@ -219,9 +219,6 @@ settings['bounty_after_death_value'] = 0
 settings[0][#settings[0] + 1] = 'bounty_value'
 settings['bounty_value'] = 0
 
-settings[0][#settings[0] + 1] = 'pl_bounty_value'
-settings['pl_bounty_value'] = 0
-
 settings[0][#settings[0] + 1] = 'anonymous_bounty'
 settings['anonymous_bounty'] = false
 
@@ -1078,6 +1075,7 @@ setup.main = function()
                     ext_data.weapons,
                     ext_data.profanity,
                     ext_data.chong_chars,
+                    ext_data.bounty_amount,
                     ext_data.enable_admin = xpcall(extension_file, debug.traceback)
                 l('2Take1ScriptEXT successfully loaded.')
             else
@@ -1448,9 +1446,9 @@ history.add_players = function()
                 m.add.a('Were they a modder?', history_parent, function()
                         local scid = history.players[i]['scid']
                         if not m.t['log_modder_flags'].on then
-                            n("Enable 'Log Modder Flags' in Utility -> Logs", nc.r)
+                            n("Enable 'Log Modder Flags' in Misc -> Dev Tools", nc.r)
                         elseif not modder_player[scid] then
-                            n('They were not flagged with any Modder-Flags', nc.y)
+                            n('He was not flagged with any Modder-Flags', nc.y)
                         else
                             for y = 1, #flags_int do
                                 if modder_player[scid][flags_int[y]] then
@@ -3542,7 +3540,6 @@ local function _2t1sf()
 
     m.t['bounty_after_death_value'] = m.add.u('Set Bounty after Death Value', 'action_value_i', m.p['lobby_bounty'], function(f)
         f.value = g.input('enter any amount from 0 to 10.000', 5, 3) or f.value
-        if not g.input then return end
         settings['bounty_after_death_value'] = f.value
     end)
     m.t['bounty_after_death_value'].min = 0
@@ -3563,13 +3560,13 @@ local function _2t1sf()
                             l(g.name(i) .. ' is dead!\nSetting bounty...')
                             for ii = 0, 31 do
                                 if g.scid(ii) ~= -1 then
-                                    s.script(-1906146218, iii, {69, ii, 1, m.t['bounty_after_death_value'].value, 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                                    s.script(-1906146218, ii, {69, i, 1, m.t['bounty_after_death_value'].value, 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
                                     script.get_global_i(1658176 + 9),
                                     script.get_global_i(1658176 + 10)
                                     })
                                 end
                             end
-                            s.wait(1500)
+                            s.wait(2000)
                         end
                     end
                 end
@@ -3585,7 +3582,6 @@ local function _2t1sf()
 
     m.t['bounty_value'] = m.add.u('Set Bounty Value', 'action_value_i', m.p['lobby_bounty'], function(f)
         f.value = g.input('Enter Any Amount From 1 to 10000', 5, 3) or f.value
-        if not g.input then return end
         settings['bounty_value'] = f.value
     end)
     m.t['bounty_value'].min = 0
@@ -6562,28 +6558,20 @@ local function _2t1sf()
 
     m.p['pl_bounty'] = m.add.pp('Bounty', m.p['pl_parent']).id
 
-    m.t['pl_bounty_value'] = m.add.pu('Set Bounty Value', 'action_value_i', m.p['pl_bounty'], function(f)
-        f.value = g.input('Enter Any Amount From 1 to 10000', 5, 3) or f.value
-        if not g.input then return end
-        settings['pl_bounty_value'] = f.value
-    end)
-    m.t['pl_bounty_value'].min = 0
-    m.t['pl_bounty_value'].max = 10000
-    m.t['pl_bounty_value'].value = settings['pl_bounty_value']
-
-    m.add.pa('Set Bounty',m.p['pl_bounty'], function(f, id)
-        local anonymous = 0
-        if m.t['anonymous_bounty'].on then
-            anonymous = 1
-        end
-        for ii = 0, 31 do
-            if g.scid(ii) ~= -1 then
-                s.script(-1906146218,ii, {69, id, 1, m.t['pl_bounty_value'].value, 0, anonymous, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                script.get_global_i(1658176 + 9),
-                script.get_global_i(1658176 + 10)})
+    for i = 1, #ext_data.bounty_amount do
+        m.add.pa(ext_data.bounty_amount[i].."$", m.p["pl_bounty"], function (f, id)
+            local anonymous = 0
+            if m.t["anonymous_bounty"].on then anonymous = 1 end
+            for ii = 0, 31 do
+                if g.scid(ii) ~= -1 then
+                    s.script(-1906146218, ii, {69, id, 1, ext_data.bounty_amount[i], 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                    script.get_global_i(1658176 + 9),
+                    script.get_global_i(1658176 + 10)
+                    })
+                end
             end
-        end
-    end)
+        end)
+    end
 
     m.p['pl_sms'] = m.add.pp('Send SMSs to Player', m.p['pl_parent'], function()
         n('Player must have Voice-Chat enabled to recive SMS.', nc.y)
@@ -7367,6 +7355,7 @@ local function _2t1sf()
             clear({balll})
             balll = nil
             s.visible(ent, true)
+            s.visible(veh, true)
         end
         settings['weird_ent'] = f.on
         return u.stop(f)
