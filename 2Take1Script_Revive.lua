@@ -109,7 +109,7 @@ settings[0][#settings[0] + 1] = 'section_1'
 settings['section_1'] = '[Main-Settings]'
 
 settings[0][#settings[0] + 1] = 'version'
-settings['version'] = 19
+settings['version'] = 1.2
 
 settings[0][#settings[0] + 1] = '2t1s_parent'
 settings['2t1s_parent'] = true
@@ -131,6 +131,9 @@ settings['print_joining_players'] = false
 
 settings[0][#settings[0] + 1] = 'print_leaving_players'
 settings['print_leaving_players'] = false
+
+settings[0][#settings[0] + 1] = 'print_modders'
+settings['print_modders'] = false
 
 settings[0][#settings[0] + 1] = 'log_script'
 settings['log_script'] = true
@@ -201,9 +204,6 @@ settings['explode_lobby_value'] = 8
 settings[0][#settings[0] + 1] = 'explode_lobby_shake'
 settings['explode_lobby_shake'] = false
 
-settings[0][#settings[0] + 1] = 'sound_rape'
-settings['sound_rape'] = false
-
 settings[0][#settings[0] + 1] = 'kill_all_peds'
 settings['kill_all_peds'] = false
 
@@ -215,12 +215,6 @@ settings['bounty_after_death'] = false
 
 settings[0][#settings[0] + 1] = 'bounty_after_death_value'
 settings['bounty_after_death_value'] = 0
-
-settings[0][#settings[0] + 1] = 'bounty_value'
-settings['bounty_value'] = 0
-
-settings[0][#settings[0] + 1] = 'anonymous_bounty'
-settings['anonymous_bounty'] = false
 
 settings[0][#settings[0] + 1] = 'sms_spam'
 settings['sms_spam'] = false
@@ -501,6 +495,9 @@ settings['clear_area_2'] = false
 settings[0][#settings[0] + 1] = 'auto_tp_wp'
 settings['auto_tp_wp'] = false
 
+settings[0][#settings[0] + 1] = 'disable_orb_cannon_cd'
+settings['disable_orb_cannon_cd'] = false
+
 settings[0][#settings[0] + 1] = 'remove_orb_cannon_cd'
 settings['remove_orb_cannon_cd'] = false
 
@@ -733,7 +730,7 @@ settings[0][#settings[0] + 1] = 'bodyguards_god'
 settings['bodyguards_god'] = false
 
 settings[0][#settings[0] + 1] = 'bodyguards_health'
-settings['bodyguards_health'] = 5000
+settings['bodyguards_health'] = 328
 
 settings[0][#settings[0] + 1] = 'bodyguards_equip_weapon'
 settings['bodyguards_equip_weapon'] = false
@@ -755,6 +752,9 @@ settings['attach_no_colision'] = false
 
 settings[0][#settings[0] + 1] = 'continuously_assassins'
 settings['continuously_assassins'] = false
+
+settings[0][#settings[0] + 1] = 'immortal_assassins'
+settings['immortal_assassins'] = false
 
 settings[0][#settings[0] + 1] = 'enable_hotkeys'
 settings['enable_hotkeys'] = false
@@ -882,6 +882,19 @@ local nc = {
     g = 0x00ff00
 }
 
+local function pr(text, custom_prefix)
+    if not text then return end
+    local prefix = u.time_prefix()
+    if custom_prefix then
+        prefix = prefix .. custom_prefix .. " "
+    end
+    text = prefix .. text
+    print(text)
+    if settings['log_console'] then
+        u.write(s.o(files['Console_log'], 'a'), text)
+    end
+end
+
 local function n(text, color, header)
     if not text then
         return
@@ -890,6 +903,12 @@ local function n(text, color, header)
     header = header or '2T1Script Revive'
     color = color or 0x0000FF
     menu.notify(text, header, 8, color)
+    if settings['print_scriptlog'] then
+        pr(text, ' [2T1Script Revive] ')
+        if settings['log_console'] then
+            u.write(s.o(files['Console_log'], 'a'),'[2T1Script Revive] ' .. text)
+        end
+    end
 end
 
 local function l(text)
@@ -912,19 +931,6 @@ local function lc(text)
         local prefix = u.time_prefix()
         text = prefix .. text
         u.write(s.o(files['Chat_log'], 'a'), text)
-    end
-end
-
-local function pr(text, custom_prefix)
-    if not text then return end
-    local prefix = u.time_prefix()
-    if custom_prefix then
-        prefix = prefix .. custom_prefix .. " "
-    end
-    text = prefix .. text
-    print(text)
-    if settings['log_console'] then
-        u.write(s.o(files['Console_log'], 'a'), text)
     end
 end
 
@@ -1075,7 +1081,6 @@ setup.main = function()
                     ext_data.weapons,
                     ext_data.profanity,
                     ext_data.chong_chars,
-                    ext_data.bounty_amount,
                     ext_data.enable_admin = xpcall(extension_file, debug.traceback)
                 l('2Take1ScriptEXT successfully loaded.')
             else
@@ -1782,6 +1787,9 @@ local outfits = {
 }
 local stat = {}
 stat.hashes = {
+    ["orbital_cannon_cd"] = {
+		"ORBITAL_CANNON_COOLDOWN", 0
+	},
     ['snacks_and_armor'] = {
         {'NO_BOUGHT_YUM_SNACKS', 30},
         {'NO_BOUGHT_HEALTH_SNACKS', 15},
@@ -2813,29 +2821,20 @@ local function _2t1sf()
     end)
     m.t['bodyguards_god'].on = settings['bodyguards_god']
 
-    m.t['bodyguards_health'] =
-        m.add.u(
-        'Set Health of Bodyguards',
-        'autoaction_value_i',
-        m.p['bodyguards'],
-        function(f)
-            n('Bodyguards Health set to: ' .. f.value, nc.g)
-            settings['bodyguards_health'] = f.value
-        end
-    )
-    m.t['bodyguards_health'].min = 5000
+    m.t['bodyguards_health'] = m.add.u('Set Health of Bodyguards', 'action_value_i', m.p['bodyguards'], function(f)
+        f.value = g.input('Enter Bodyguards Health Value (100 - 50000)', 5, 3) or f.value
+        n('Bodyguards Health set to: ' .. f.value, nc.g)
+        settings['bodyguards_health'] = f.value
+    end)
+    m.t['bodyguards_health'].min = 100
     m.t['bodyguards_health'].max = 50000
-    m.t['bodyguards_health'].mod = 5000
     m.t['bodyguards_health'].value = settings['bodyguards_health']
-    m.t['bodyguards_equip_weapon'] =
-        m.add.t(
-        'Equip Bodyguards with MG',
-        m.p['bodyguards'],
-        function(f)
-            settings['bodyguards_equip_weapon'] = f.on
-        end
-    )
+
+    m.t['bodyguards_equip_weapon'] = m.add.t('Equip Bodyguards with MG', m.p['bodyguards'], function(f)
+        settings['bodyguards_equip_weapon'] = f.on
+    end)
     m.t['bodyguards_equip_weapon'].on = settings['bodyguards_equip_weapon']
+
     m.t['bodyguards_formation'] = m.add.u('Set Formation', 'autoaction_value_i', m.p['bodyguards'], function(f)
         settings['bodyguards_formation_type'] = f.value
     end)
@@ -3030,11 +3029,7 @@ local function _2t1sf()
         )
     end
     m.p['explode'] = m.add.p('Explosion Features', m.p['lobby']).id
-    m.t['laser_beam_explode_waypoint'] =
-        m.add.a(
-        'Laser Beam Explode Waypoint',
-        m.p['explode'],
-        function()
+    m.t['laser_beam_explode_waypoint'] = m.add.a('Laser Beam Explode Waypoint', m.p['explode'], function()
             local wp = ui.get_waypoint_coord()
             if wp.x ~= 16000 then
                 local maxz = s.gcoords(o.ped()).z + 175
@@ -3056,14 +3051,9 @@ local function _2t1sf()
             else
                 n('No Waypoint found, set a waypoint first!', nc.r)
             end
-        end
-    )
-    m.t['explode_lobby'] =
-        m.add.u(
-        'Random Explosions',
-        'value_i',
-        m.p['explode'],
-        function(f)
+        end)
+
+    m.t['explode_lobby'] = m.add.u('Random Explosions', 'value_i', m.p['explode'], function(f)
             if f.on then
                 for i = 1, 5 do
                     s.explode(
@@ -3079,17 +3069,13 @@ local function _2t1sf()
             settings['explode_lobby_value'] = f.value
             settings['explode_lobby'] = f.on
             return u.stop(f)
-        end
-    )
+        end)
     m.t['explode_lobby'].max = 74
     m.t['explode_lobby'].min = 0
     m.t['explode_lobby'].value = settings['explode_lobby_value']
     m.t['explode_lobby'].on = settings['explode_lobby']
-    m.t['explode_lobby_shake'] =
-        m.add.t(
-        'Shake Cam',
-        m.p['explode'],
-        function(f)
+
+    m.t['explode_lobby_shake'] = m.add.t('Shake Cam', m.p['explode'], function(f)
             if f.on then
                 local pos = v3()
                 for i = 1, 10 do
@@ -3101,48 +3087,14 @@ local function _2t1sf()
             end
             settings['explode_lobby_shake'] = f.on
             return u.stop(f)
-        end
-    )
+        end)
     m.t['explode_lobby_shake'].on = settings['explode_lobby_shake']
-    m.p['sound'] = m.add.p('Sound Features', m.p['lobby']).id
-    m.t['sound_rape'] =
-        m.add.t(
-        'Sound Rape',
-        m.p['sound'],
-        function(f)
-            if f.on then
-                for i = 0, 31 do
-                    if valid.i(i) then
-                        audio.play_sound_from_entity(2, 'Wasted', s.ped(i), 'DLC_IE_VV_General_Sounds')
-                        s.wait(50)
-                    end
-                end
-            end
-            settings['sound_rape'] = f.on
-            return u.stop(f)
-        end
-    )
-    m.t['sound_rape'].on = settings['sound_rape']
-    m.add.a(
-        'Garage-Door Sound - Infinite Time',
-        m.p['sound'],
-        function()
-            for i = 0, 31 do
-                if valid.i(i) then
-                    audio.play_sound_from_entity(2, 'Garage_Door', s.ped(i), 'DLC_HEISTS_GENERIC_SOUNDS')
-                end
-            end
-        end
-    )
+
     m.p['chat'] = m.add.p('Chat Features', m.p['lobby'])
     m.p['chat'].hidden = settings['chat_hidden']
     m.p['chat'] = m.p['chat'].id
-    m.t['echo_chat'] =
-        m.add.u(
-        'Echo Chat X times',
-        'value_i',
-        m.p['chat'],
-        function(f)
+
+    m.t['echo_chat'] = m.add.u('Echo Chat X times', 'value_i', m.p['chat'], function(f)
             if f.on and not chat_events['echo_chat'] then
                 chat_events['echo_chat'] =
                     event.add_event_listener(
@@ -3162,19 +3114,14 @@ local function _2t1sf()
             end
             settings['echo_chat_value'] = f.value
             settings['echo_chat'] = f.on
-        end
-    )
+        end)
     m.t['echo_chat'].min = 1
     m.t['echo_chat'].max = 10
     m.t['echo_chat'].value = settings['echo_chat_value']
     m.t['echo_chat'].on = settings['echo_chat']
+
     local spam_msg
-    m.t['ultra_spammer'] =
-        m.add.u(
-        'Ultra Spammer',
-        'value_i',
-        m.p['chat'],
-        function(f)
+    m.t['ultra_spammer'] = m.add.u('Ultra Spammer', 'value_i', m.p['chat'], function(f)
             if f.on then
                 if not spam_msg then
                     local msg = g.input('Enter message to spam')
@@ -3193,16 +3140,11 @@ local function _2t1sf()
                 spam_msg = nil
             end
             return u.stop(f)
-        end
-    )
+        end)
     m.t['ultra_spammer'].max = 100
     m.t['ultra_spammer'].mod = 5
 
-    m.t['chat_begger'] =
-        m.add.t(
-        'Punish Money Beggers',
-        m.p['chat'],
-        function(f)
+    m.t['chat_begger'] = m.add.t('Punish Money Beggers', m.p['chat'], function(f)
             if f.on and not chat_events['chat_begger'] then
                 chat_events['chat_begger'] =
                     event.add_event_listener(
@@ -3225,22 +3167,17 @@ local function _2t1sf()
                                 end
                             end
                         end
-                    end
-                )
+                    end)
             end
             if not f.on and chat_events['chat_begger'] then
                 event.remove_event_listener('chat', chat_events['chat_begger'])
                 chat_events['chat_begger'] = nil
             end
             settings['chat_begger'] = f.on
-        end
-    )
+        end)
     m.t['chat_begger'].on = settings['chat_begger']
-    m.t['chat_cmd'] =
-        m.add.t(
-        'Enable Chat-Commands',
-        m.p['chat'],
-        function(f)
+
+    m.t['chat_cmd'] = m.add.t('Enable Chat-Commands', m.p['chat'], function(f)
             if f.on and not chat_events['chat_cmd'] then
                 chat_events['chat_cmd'] =
                     event.add_event_listener(
@@ -3386,61 +3323,41 @@ local function _2t1sf()
                                 end
                             end
                         end
-                    end
-                )
+                    end)
             end
             if not f.on and chat_events['chat_cmd'] then
                 event.remove_event_listener('chat', chat_events['chat_cmd'])
                 chat_events['chat_cmd'] = nil
             end
             settings['chat_cmd'] = f.on
-        end
-    )
+        end)
     m.t['chat_cmd'].on = settings['chat_cmd']
     m.p['chat_cmd'] = m.add.p('Chat-Commands', m.p['chat']).id
+
     for i = 1, #cmds do
-        m.t[cmds[i][1]] =
-            m.add.t(
-            cmds[i][2],
-            m.p['chat_cmd'],
-            function(f)
-                settings[cmds[i][1]] = f.on
-            end
-        )
+        m.t[cmds[i][1]] = m.add.t(cmds[i][2], m.p['chat_cmd'], function(f)
+            settings[cmds[i][1]] = f.on
+        end)
         m.t[cmds[i][1]].on = settings[cmds[i][1]]
     end
+
     m.add.a('[SU] = Script-User', m.p['chat_cmd'])
-    m.add.a(
-        'Delete Vehicles from !lag',
-        m.p['chat'],
-        function()
-            clear(entitys['lag_area'])
-            entitys['lag_area'] = {}
-        end
-    )
-    m.t['chat_cmd_friends'] =
-        m.add.t(
-        'Chat Commands for Friends',
-        m.p['chat'],
-        function(f)
-            settings['chat_cmd_friends'] = f.on
-        end
-    )
+    m.add.a('Delete Vehicles from !lag', m.p['chat'], function()
+        clear(entitys['lag_area'])
+        entitys['lag_area'] = {}
+    end)
+
+    m.t['chat_cmd_friends'] = m.add.t('Chat Commands for Friends', m.p['chat'], function(f)
+        settings['chat_cmd_friends'] = f.on
+    end)
     m.t['chat_cmd_friends'].on = settings['chat_cmd_friends']
-    m.t['chat_cmd_all'] =
-        m.add.t(
-        'Chat Commands Everyone',
-        m.p['chat'],
-        function(f)
-            settings['chat_cmd_all'] = f.on
-        end
-    )
+
+    m.t['chat_cmd_all'] = m.add.t('Chat Commands Everyone', m.p['chat'], function(f)
+        settings['chat_cmd_all'] = f.on
+    end)
     m.t['chat_cmd_all'].on = settings['chat_cmd_all']
-    m.t['kill_all_peds'] =
-        m.add.t(
-        'Kill all PEDs',
-        m.p['lobby'],
-        function(f)
+
+    m.t['kill_all_peds'] = m.add.t('Kill all PEDs', m.p['lobby'], function(f)
             if f.on then
                 local kills = ped.get_all_peds()
                 for i = 1, #kills do
@@ -3451,15 +3368,12 @@ local function _2t1sf()
             end
             settings['kill_all_peds'] = f.on
             return u.stop(f)
-        end
-    )
+        end)
     m.t['kill_all_peds'].on = settings['kill_all_peds']
+
     m.p['lobby_vehicle'] = m.add.p('Vehicles', m.p['lobby']).id
-    m.t['disablecontrol'] =
-        m.add.t(
-        'Disable Control from near Vehicles',
-        m.p['lobby_vehicle'],
-        function(f)
+
+    m.t['disablecontrol'] = m.add.t('Disable Control from near Vehicles', m.p['lobby_vehicle'], function(f)
             if f.on then
                 for i = 0, 31 do
                     if valid.i(i) then
@@ -3474,15 +3388,10 @@ local function _2t1sf()
             end
             settings['disablecontrol'] = f.on
             return u.stop(f)
-        end
-    )
+        end)
     m.t['disablecontrol'].on = settings['disablecontrol']
-    m.t['modify_veh_speed'] =
-        m.add.u(
-        'Modify Vehicle Speeds',
-        'autoaction_value_i',
-        m.p['lobby_vehicle'],
-        function(f)
+
+    m.t['modify_veh_speed'] = m.add.u('Modify Vehicle Speeds', 'autoaction_value_i', m.p['lobby_vehicle'], function(f)
             settings['modify_veh_speed'] = f.value
             local maxspeed = 540
             if settings['modify_veh_speed_override'] then
@@ -3546,58 +3455,44 @@ local function _2t1sf()
     m.t['bounty_after_death_value'].max = 10000
     m.t['bounty_after_death_value'].value = settings['bounty_after_death_value']
     
-    m.t['bounty_after_death'] = m.add.t('Set Bounty after Death', m.p['lobby_bounty'], function(f)
-            settings['bounty_after_death'] = f.on
-            if f.on then
-                local anonymous = 0
-                if m.t['anonymous_bounty'].on then
-                    anonymous = 1
-                end
-                for i = 0, 31 do
-                    if valid.i(i) then
-                        if player.get_player_health(i) == 0 then
-                            n(g.name(i) .. ' is dead!\nSetting bounty...', nc.y)
-                            l(g.name(i) .. ' is dead!\nSetting bounty...')
-                            for ii = 0, 31 do
-                                if g.scid(ii) ~= -1 then
-                                    s.script(-1906146218, ii, {69, i, 1, m.t['bounty_after_death_value'].value, 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-                                    script.get_global_i(1658176 + 9),
-                                    script.get_global_i(1658176 + 10)
-                                    })
-                                end
-                            end
-                            s.wait(2000)
+    f = m.add.u("Give Bounty after Death", "value_str", m.p['lobby_bounty'], function(f, id)
+        local anonymous = 0
+        if f.value == 0 then
+            anonymous = 1
+        end
+        for i = 0, 31 do
+            if valid.i(i) then
+                if player.get_player_health(i) == 0 then
+                    n(g.name(i) .. ' is dead!\nSetting bounty...', nc.y)
+                    l(g.name(i) .. ' is dead!\nSetting bounty...')
+                    for ii = 0, 31 do
+                        if g.scid(ii) ~= -1 then
+                            s.script(-1906146218, ii, {69, i, 1, m.t['bounty_after_death_value'].value, 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            script.get_global_i(1658176 + 9),
+                            script.get_global_i(1658176 + 10)
+                            })
                         end
                     end
+                    s.wait(2000)
                 end
             end
-            return u.stop(f)
-        end)
-    m.t['bounty_after_death'].on = settings['bounty_after_death']
-
-    m.t['anonymous_bounty'] = m.add.t('Anonymous Bounty', m.p['lobby_bounty'], function(f)
-        settings['anonymous_bounty'] = f.on
+        end
+        return u.stop(f)
     end)
-    m.t['anonymous_bounty'].on = settings['anonymous_bounty']
+	f:set_str_data({"Anonymous", "Named"})
 
-    m.t['bounty_value'] = m.add.u('Set Bounty Value', 'action_value_i', m.p['lobby_bounty'], function(f)
-        f.value = g.input('Enter Any Amount From 1 to 10000', 5, 3) or f.value
-        settings['bounty_value'] = f.value
-    end)
-    m.t['bounty_value'].min = 0
-    m.t['bounty_value'].max = 10000
-    m.t['bounty_value'].value = settings['bounty_value']
-
-    m.add.a('Set Bounty', m.p['lobby_bounty'], function()
+    f = m.add.u("Give Bounty (Custom Input)", "action_value_str", m.p['lobby_bounty'], function(f, id)
+        local bounty_value = g.input('Enter any amount from 0 to 10.000', 5, 3)
+        if not bounty_value then return end
         local anonymous = 0
-        if m.t['anonymous_bounty'].on then
+        if f.value == 0 then
             anonymous = 1
         end
         for ii = 0, 31 do
             if g.scid(ii) ~= -1 then
                 for iii = 0, 31 do
                     if g.scid(iii) ~= -1 then
-                        s.script(-1906146218, iii, {69, ii, 1, m.t['bounty_value'].value, 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                        s.script(-1906146218, iii, {69, ii, 1, bounty_value, 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
                         script.get_global_i(1658176 + 9),
                         script.get_global_i(1658176 + 10)
                         })
@@ -3607,6 +3502,7 @@ local function _2t1sf()
             end
         end
     end)
+	f:set_str_data({"Anonymous", "Named"})
 
     m.p['lobby_se'] = m.add.p('Script Events', m.p['lobby']).id
 
@@ -6443,10 +6339,8 @@ local function _2t1sf()
     m.p['pl_se'] = m.add.pp('Script-Events', m.p['pl_parent']).id
 
     m.p['pl_se_custom'] = m.add.pp('Custom Script Events', m.p['pl_se']).id
-    m.add.pa(
-        'Enter Custom Script Event with Parameters',
-        m.p['pl_se_custom'],
-        function(f, id)
+
+    m.add.pa('Enter Custom Script Event with Parameters', m.p['pl_se_custom'], function(f, id)
             local se_c_p
             local se_p = {}
             local se_c = g.input('Enter Custom SE (DEC)', 32, 3)
@@ -6473,8 +6367,8 @@ local function _2t1sf()
             end
             s.script(se_c, id, se_p)
             n('Sent Custom Script Event with Parameters to Player.', nc.g)
-        end
-    )
+        end)
+
     for i = 1, #ext_data.custom_se do
         m.add.pa(
             ext_data.custom_se[i][1],
@@ -6487,6 +6381,24 @@ local function _2t1sf()
             end
         )
     end
+
+    f = m.add.pu("Give Bounty (Custom Input)", "action_value_str", m.p['pl_se'], function(f, id)
+        local bounty_value = g.input('Enter any amount from 0 to 10.000', 5, 3)
+        if not bounty_value then return end
+        local anonymous = 0
+        if f.value == 0 then
+            anonymous = 1
+        end
+        for ii = 0, 31 do
+            if g.scid(ii) ~= -1 then
+                s.script(-1906146218, ii, {69, id, 1, bounty_value, 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                script.get_global_i(1658176 + 9),
+                script.get_global_i(1658176 + 10)
+                })
+            end
+        end
+    end)
+	f:set_str_data({"Anonymous", "Named"})
 
     m.add.pa('Send Player to Island', m.p['pl_se'], function(f, id)
         send_se(false, -1479371259, {1, 1}, nil, nil, id)
@@ -6524,12 +6436,21 @@ local function _2t1sf()
         clear(entitys['peds'])
         entitys['peds'] = {}
     end)
+
     for i = 1, #ext_data.ped_assassins do
         m.add.pa('Spawn ' .. ext_data.ped_assassins[i][1] .. ' (3x)', m.p['pl_assassins_peds'], function(f, id)
                 l('Spawning PEDs.')
                 assassins_target = id
                 local hash = ext_data.ped_assassins[i][2]
                 local ped_type = ext_data.ped_assassins[i][3]
+                local ped_weapon = ext_data.ped_assassins[i][4]
+                if not ped_weapon then 
+                    ped_weapon = 0xDBBD7280 
+                end
+                local ped_health = 328
+                if settings['immortal_assassins'] then
+                    ped_health = 25000000.0
+                end
                 local pos = v3()
                 req.model(hash)
                 for i = 1, 3 do
@@ -6538,10 +6459,10 @@ local function _2t1sf()
                     pos.y = pos.y + s.random(-10, 10)
                     entitys['peds'][#entitys['peds'] + 1] = spawn.ped(hash, pos, ped_type)
                     if ped_type ~= 28 then
-                        weapon.give_delayed_weapon_to_ped(entitys['peds'][#entitys['peds']], 0xDBBD7280, 0, 0)
+                        weapon.give_delayed_weapon_to_ped(entitys['peds'][#entitys['peds']], ped_weapon, 0, 0)
                     end
-                    ped.set_ped_max_health(entitys['peds'][#entitys['peds']], 25000000.0)
-                    ped.set_ped_health(entitys['peds'][#entitys['peds']], 25000000.0)
+                    ped.set_ped_max_health(entitys['peds'][#entitys['peds']], ped_health)
+                    ped.set_ped_health(entitys['peds'][#entitys['peds']], ped_health)
                     ped.set_ped_combat_attributes(entitys['peds'][#entitys['peds']], 46, true)
                     ped.set_ped_combat_ability(entitys['peds'][#entitys['peds']], 2)
                     ped.set_ped_config_flag(entitys['peds'][#entitys['peds']], 187, 0)
@@ -6553,23 +6474,6 @@ local function _2t1sf()
                 end
                 s.unload(hash)
                 l('Done.')
-        end)
-    end
-
-    m.p['pl_bounty'] = m.add.pp('Bounty', m.p['pl_parent']).id
-
-    for i = 1, #ext_data.bounty_amount do
-        m.add.pa(ext_data.bounty_amount[i].."$", m.p["pl_bounty"], function (f, id)
-            local anonymous = 0
-            if m.t["anonymous_bounty"].on then anonymous = 1 end
-            for ii = 0, 31 do
-                if g.scid(ii) ~= -1 then
-                    s.script(-1906146218, ii, {69, id, 1, ext_data.bounty_amount[i], 0, anonymous,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-                    script.get_global_i(1658176 + 9),
-                    script.get_global_i(1658176 + 10)
-                    })
-                end
-            end
         end)
     end
 
@@ -7556,6 +7460,26 @@ local function _2t1sf()
 
     m.p['stats'] = m.add.p('Stats', m.p['misc']).id
 
+    m.add.a("Reset Orbital-Cannon Cooldown", m.p["stats"], function()
+        local hashes = stat.hashes["orbital_cannon_cd"]
+        stat.set(hashes[1], true, hashes[2])
+    end)
+
+    m.t["disable_orb_cannon_cd"] = m.add.t("Disable Orbital-Cannon Cooldown", m.p["stats"], function(f)
+        if f.on then
+            local t = s.time() + 2000
+            while t > s.time() do
+                settings["disable_orb_cannon_cd"] = f.on
+                s.wait(250)
+            end
+            local hashes = stat.hashes["orbital_cannon_cd"]
+            stat.set(hashes[1], true, hashes[2])
+        end
+        settings["disable_orb_cannon_cd"] = f.on
+        return u.stop(f)
+    end)
+    m.t["disable_orb_cannon_cd"].on = settings["disable_orb_cannon_cd"]
+
     m.add.a('Fill Snacks and Armor', m.p['stats'], function()
         local hashes = stat.hashes['snacks_and_armor']
         for i = 1, #hashes do
@@ -8192,7 +8116,7 @@ local function _2t1sf()
     m.t['print_chatlog'] = m.add.t('Print Chat to console', m.p['console'], function(f)
         if f.on and not chat_events['print_chatlog'] then
             chat_events['print_chatlog'] = event.add_event_listener('chat', function(e)
-                pr('(' .. g.name(e.player) .. ' / ' .. g.scid(e.player) .. "): '" .. e.body .. "'", ' [CHAT]')
+                pr(g.name(e.player) .. ' (' .. g.scid(e.player) .. "): '" .. e.body .. "'", ' [CHAT]')
             end)
         end
         if not f.on and chat_events['print_chatlog'] then
@@ -8204,7 +8128,7 @@ local function _2t1sf()
     m.t['print_chatlog'].on = settings['print_chatlog']
 
     
-    m.t['print_joining_players'] = m.add.t('Print joining players to console', m.p['console'], function(f)
+    m.t['print_joining_players'] = m.add.t('Print Joining Players to console', m.p['console'], function(f)
         if f.on and not player_events['print_joining_players'] then
             player_events['print_joining_players'] = 
             event.add_event_listener('player_join', function(e)
@@ -8223,7 +8147,7 @@ local function _2t1sf()
     m.t['print_joining_players'].on = settings['print_joining_players']
 
 
-    m.t['print_leaving_players'] = m.add.t('Print leaving players to console', m.p['console'], function(f)
+    m.t['print_leaving_players'] = m.add.t('Print Leaving Players to console', m.p['console'], function(f)
         if f.on and not player_events['print_leaving_players1'] then
             local pids = {}
             player_events['print_leaving_players1'] = 
@@ -8258,6 +8182,14 @@ local function _2t1sf()
     m.t['print_leaving_players'].on = settings['print_leaving_players']
 
 
+    m.t['print_modders'] = m.add.t('Print Modder Detections to console (WIP)', m.p['console'], function(f)
+        if f.on and not settings['log_modder_flags'] then
+            n("Print Modder Detections requires to have Log Modder Flags enabled\nPlease enable it in Utility -> Logs", nc.y)
+        end
+        settings['print_modders'] = f.on
+    end)
+    m.t['print_modders'].on = settings['print_modders']
+
 
     m.p['logs'] = m.add.p('Logs', m.p['utils']).id
 
@@ -8279,6 +8211,9 @@ local function _2t1sf()
                             if not modder_player[g.scid(i)][int] then
                                 modder_player[g.scid(i)][int] = true
                                 l(g.scid(i) .. ':' .. g.name(i) .. ' is a Modder with Tag: ' .. text)
+                                if settings['print_modders'] then
+                                    pr(g.name(i) .. ' (' .. g.scid(i) .. ') is a Modder with Tag: ' .. text, ' [Modder Detection] ')
+                                end
                             end
                         else
                             modder_player[g.scid(i)] = {}
@@ -8395,12 +8330,9 @@ local function _2t1sf()
     m.p['opt'] = m.add.p('Options', m.p['parent'])
     m.p['opt'].hidden = settings['options_hidden']
     m.p['opt'] = m.p['opt'].id
+
     m.p['hotkeys'] = m.add.p('Hotkey Settings', m.p['opt']).id
-    m.t['enable_hotkeys'] =
-        m.add.t(
-        'Enable Hotkeys',
-        m.p['hotkeys'],
-        function(f)
+    m.t['enable_hotkeys'] = m.add.t('Enable Hotkeys', m.p['hotkeys'], function(f)
             settings['enable_hotkeys'] = f.on
             if f.on then
                 s.wait(50)
@@ -8437,38 +8369,28 @@ local function _2t1sf()
                 end
             end
             return u.stop(f)
-        end
-    )
+        end)
     m.t['enable_hotkeys'].on = settings['enable_hotkeys']
-    m.add.a(
-        'Reload 2Take1Hotkeys.ini',
-        m.p['hotkeys'],
-        function()
-            setup.hotkeys()
-            n('Reloaded Hotkeys.ini', nc.g)
-        end
-    )
-    m.t['hotkey_notification'] =
-        m.add.t(
-        'Hotkey Notifications',
-        m.p['hotkeys'],
-        function(f)
-            settings['hotkey_notification'] = f.on
-        end
-    )
+
+    m.add.a('Reload 2Take1Hotkeys.ini', m.p['hotkeys'], function()
+        setup.hotkeys()
+        n('Reloaded Hotkeys.ini', nc.g)
+    end)
+
+    m.t['hotkey_notification'] = m.add.t('Hotkey Notifications', m.p['hotkeys'], function(f)
+        settings['hotkey_notification'] = f.on
+    end)
     m.t['hotkey_notification'].on = settings['hotkey_notification']
-    m.add.a(
-        'Print active Hotkeys',
-        m.p['hotkeys'],
-        function()
-            for i = 1, #hotkeys[0] do
-                local key = hotkeys[0][i]
-                if hotkeys[key] ~= 'none' then
-                    n(hotkeys[key] .. ': "' .. m.t[key].name .. '"', nc.y)
-                end
+
+    m.add.a('Print active Hotkeys', m.p['hotkeys'], function()
+        for i = 1, #hotkeys[0] do
+            local key = hotkeys[0][i]
+            if hotkeys[key] ~= 'none' then
+                n(hotkeys[key] .. ': "' .. m.t[key].name .. '"', nc.y)
             end
         end
-    )
+    end)
+
     m.add.a('Overwrite / Update File - Hotkeys.ini', m.p['hotkeys'], setup.overwrite_hotkeys)
     m.p['mwh'] = m.add.p('Menu-Wide-Hotkeys', m.p['opt']).id
     local mwh_key = {}
@@ -8483,11 +8405,8 @@ local function _2t1sf()
         end
         io.close(__file)
     end
-    m.t['mwh_notify'] =
-        m.add.t(
-        'Menu-Wide Hotkey Notifications',
-        m.p['mwh'],
-        function(f)
+
+    m.t['mwh_notify'] = m.add.t('Menu-Wide Hotkey Notifications', m.p['mwh'], function(f)
             if f.on then
                 s.wait(50)
                 if #mwh_key == 0 then
@@ -8552,41 +8471,26 @@ local function _2t1sf()
             end
             settings['mwh_notify'] = f.on
             return u.stop(f)
-        end
-    )
+        end)
     m.t['mwh_notify'].on = settings['mwh_notify']
-    m.t['mwh_exclude_navigation'] =
-        m.add.t(
-        'Exclude Navigation Keys',
-        m.p['mwh'],
-        function(f)
-            settings['mwh_exclude_navigation'] = f.on
-        end
-    )
+
+    m.t['mwh_exclude_navigation'] = m.add.t('Exclude Navigation Keys', m.p['mwh'], function(f)
+        settings['mwh_exclude_navigation'] = f.on
+    end)
     m.t['mwh_exclude_navigation'].on = settings['mwh_exclude_navigation']
-    m.t['mwh_exclude_noclip'] =
-        m.add.t(
-        'Exclude NoClip Keys',
-        m.p['mwh'],
-        function(f)
-            settings['mwh_exclude_noclip'] = f.on
-        end
-    )
+
+    m.t['mwh_exclude_noclip'] = m.add.t('Exclude NoClip Keys', m.p['mwh'],
+    function(f)
+        settings['mwh_exclude_noclip'] = f.on
+    end)
     m.t['mwh_exclude_noclip'].on = settings['mwh_exclude_noclip']
-    m.t['mwh_exclude_editorrot'] =
-        m.add.t(
-        'Exclude EditorRotation Keys',
-        m.p['mwh'],
-        function(f)
-            settings['mwh_exclude_editorrot'] = f.on
-        end
-    )
+
+    m.t['mwh_exclude_editorrot'] = m.add.t('Exclude EditorRotation Keys', m.p['mwh'], function(f)
+        settings['mwh_exclude_editorrot'] = f.on
+    end)
     m.t['mwh_exclude_editorrot'].on = settings['mwh_exclude_editorrot']
-    m.t['mwh_exclude_file'] =
-        m.add.t(
-        'Exclude Keys from File',
-        m.p['mwh'],
-        function(f)
+
+    m.t['mwh_exclude_file'] = m.add.t('Exclude Keys from File', m.p['mwh'], function(f)
             if not s.f_exists(files['Exclude']) then
                 local lf = s.o(files['Exclude'], 'a')
                 io.output(lf)
@@ -8598,13 +8502,10 @@ local function _2t1sf()
                 n("Edit '2Take1Exclude.ini' to exclude specific hotkeys. The file is found in '2Take1Script_Revive/Config'", nc.y)
             end
             settings['mwh_exclude_file'] = f.on
-        end
-    )
+        end)
     m.t['mwh_exclude_file'].on = settings['mwh_exclude_file']
-    m.add.a(
-        'Reload 2Take1Exclude.ini',
-        m.p['mwh'],
-        function()
+
+    m.add.a('Reload 2Take1Exclude.ini', m.p['mwh'], function()
             local __file = s.o(files['Exclude'], 'r')
             if __file then
                 mwh_exclude = {}
@@ -8616,31 +8517,19 @@ local function _2t1sf()
                 io.close(__file)
                 n('Reloaded Exclude Hotkeys.', nc.g)
             end
-        end
-    )
-    m.t['exclude_friends'] =
-        m.add.t(
-        'Exclude Friends from Harmful Lobby Events',
-        m.p['opt'],
-        function(f)
-            settings['exclude_friends'] = f.on
-        end
-    )
+        end)
+
+    m.t['exclude_friends'] = m.add.t('Exclude Friends from Harmful Lobby Events', m.p['opt'], function(f)
+        settings['exclude_friends'] = f.on
+    end)
     m.t['exclude_friends'].on = settings['exclude_friends']
-    m.t['attach_no_colision'] =
-        m.add.t(
-        'Attached Entitys No Collision',
-        m.p['opt'],
-        function(f)
-            settings['attach_no_colision'] = f.on
-        end
-    )
+
+    m.t['attach_no_colision'] = m.add.t('Attached Entitys No Collision', m.p['opt'], function(f)
+        settings['attach_no_colision'] = f.on
+    end)
     m.t['attach_no_colision'].on = settings['attach_no_colision']
-    m.t['continuously_assassins'] =
-        m.add.t(
-        'Continuously Assassin Peds',
-        m.p['opt'],
-        function(f)
+
+    m.t['continuously_assassins'] = m.add.t('Continuously Assassin Peds', m.p['opt'], function(f)
             settings['continuously_assassins'] = f.on
             if f.on and #entitys['peds'] > 0 then
                 if g.scid(assassins_target) ~= -1 then
@@ -8654,46 +8543,40 @@ local function _2t1sf()
                 s.wait(500)
             end
             return u.stop(f)
-        end
-    )
+        end)
     m.t['continuously_assassins'].on = settings['continuously_assassins']
-    m.t['disable_history'] =
-        m.add.t(
-        'Disable Player-History',
-        m.p['opt'],
-        function(f)
-            settings['disable_history'] = f.on
-        end
-    )
-    m.t['2t1s_parent'] =
-        m.add.t(
-        '2Take1Script Parent',
-        m.p['opt'],
-        function(f)
-            settings['2t1s_parent'] = f.on
-        end
-    )
+
+    m.t['immortal_assassins'] = m.add.t('Spawn PED Assassins Immortal', m.p['opt'], function(f)
+        settings['immortal_assassins'] = f.on
+    end)
+    m.t['immortal_assassins'].on = settings['immortal_assassins']
+
+    m.t['disable_history'] = m.add.t('Disable Player-History', m.p['opt'],
+    function(f)
+        settings['disable_history'] = f.on
+    end)
+
+    m.t['2t1s_parent'] = m.add.t('2Take1Script Parent', m.p['opt'], function(f)
+        settings['2t1s_parent'] = f.on
+    end)
     m.t['2t1s_parent'].on = settings['2t1s_parent']
-    m.t['save_config'] =
-        m.add.a(
-        'Save Configuration',
-        m.p['opt'],
-        function()
-            local sf = s.o(files['Config'], 'w+')
-            io.output(sf)
-            for i = 1, #settings[0] do
-                local index = settings[0][i]
-                if not string.find(index, 'section', 1) then
-                    io.write(index .. '=' .. tostring(settings[index]) .. '\n')
-                else
-                    io.write(tostring(settings[index]) .. '\n')
-                end
+
+    m.t['save_config'] = m.add.a('Save Configuration', m.p['opt'], function()
+        local sf = s.o(files['Config'], 'w+')
+        io.output(sf)
+        for i = 1, #settings[0] do
+            local index = settings[0][i]
+            if not string.find(index, 'section', 1) then
+                io.write(index .. '=' .. tostring(settings[index]) .. '\n')
+            else
+                io.write(tostring(settings[index]) .. '\n')
             end
-            io.close(sf)
-            l('Saved Configuration to file.')
-            n('Saved Configuration to file.', nc.g)
         end
-    )
+        io.close(sf)
+        l('Saved Configuration to file.')
+        n('Saved Configuration to file.', nc.g)
+    end)
+
     l('\n\nLoaded 2Take1Script successfully. :)')
     n('2Take1Script successfully loaded. :)', nc.g)
     _2t1s = true
