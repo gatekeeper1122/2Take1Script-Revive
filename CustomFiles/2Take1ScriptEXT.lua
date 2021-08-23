@@ -15,6 +15,10 @@ local custom_script_events = {
 	} },
 }
 
+local bounty_amount = {
+	0, 1, 10, 69, 420, 666, 1337, 5555, 9999, 10000
+}
+
 local ped_assassins = {
 	{"Cop", 0x5E3DA4A4, 6},
 	{"FIB", 0x5CDEF405, 6},
@@ -1059,4 +1063,4 @@ local weapons = {
 return
 	custom_script_events, ped_assassins, russki_chars, begger_texts, speedometer_units,
 	block_custom, custom_attachments, custom_vehicles, vehicle_lag_area, sms_texts,
-	weapons, profanity, chong_chars
+	weapons, profanity, chong_chars, bounty_amount
