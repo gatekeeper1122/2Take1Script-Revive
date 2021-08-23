@@ -117,7 +117,7 @@ If you have a problem loading this script, have a look [**here**](#common-questi
   - Electrocute Player
 - Bodyguards
   - Godmode for Bodyguards
-  - Set Health of Bodyguards (5000-50000)
+  - Set Health of Bodyguards (100-50000)
   - Equip Bodyguards with MG
   - Set Formation
   - Set Number
@@ -426,6 +426,7 @@ If you have a problem loading this script, have a look [**here**](#common-questi
 - Exclude Friends from Harmful Lobby Events
 - Attached Entitys No Collision
 - Continuously Assassin Peds
+- Spawn PED Assassins Immortal
 - Disable Player-History
 - 2Take1Script Parent
 - Save Configuration
