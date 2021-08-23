@@ -15,16 +15,16 @@ local custom_script_events = {
 	} },
 }
 
-local bounty_amount = {
-	0, 1, 10, 69, 420, 666, 1337, 5555, 9999, 10000
-}
-
 local ped_assassins = {
-	{"Cop", 0x5E3DA4A4, 6},
-	{"FIB", 0x5CDEF405, 6},
-	{"Juggernaut", 0x90EF5134, 4},
+	{"Cop", 0x5E3DA4A4, 6, 0x1D073A89},
+	{"Security", 0xDA2C984E, 6, 0x3656C8C1},
+	{"FIB", 0x5CDEF405, 6, 0x2BE6766B},
+	{"Military", 0xF2DAA2ED, 6, 0xBFEFFF6D},
+	{"Juggernaut", 0x90EF5134, 4, 0x42BF8A85},
+	{"Taliban", 0x4705974A, 4, 0xB1CA77B1},
+	{"Transvestite", 0xE0E69974, 6, 0xAF3696A1},
 	{"Bigfoot", 0x61D4C771, 28},
-	{"Cat", 0x573201B8, 28},
+	{"Panther", 0xE71D5E68, 28},
 	{"Mountain Lion", 0x1250D7BA, 28},
 	{"Humpback", 0x471BE4B2, 28}
 }
@@ -1063,4 +1063,4 @@ local weapons = {
 return
 	custom_script_events, ped_assassins, russki_chars, begger_texts, speedometer_units,
 	block_custom, custom_attachments, custom_vehicles, vehicle_lag_area, sms_texts,
-	weapons, profanity, chong_chars, bounty_amount
+	weapons, profanity, chong_chars
