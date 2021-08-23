@@ -5,7 +5,6 @@
 > Big Thanks to Proddy and haekkzer himself who teached me some stuff about lua and helped me with issues!
 > 
 > - Thanks to Kektram for (more or less) allowing me to steal 2 globals
-> - You are gay jhowkNx
 
 ### Table of Contents
 
@@ -61,6 +60,7 @@ If you have a problem loading this script, have a look [**here**](#common-questi
   - Custom Script Events
     - Enter Custom Script Event with Parameters
     - Send Script Events from a Custom presaved list
+  - Give Bounty (Custom Input, Anonymous or Named)
   - Send Player to Island
   - Block - Passive
   - Unblock - Passive
@@ -72,9 +72,6 @@ If you have a problem loading this script, have a look [**here**](#common-questi
 - Send PEDs (Assassins)
   - Clear PEDs
   - Send PEDs from a custom list
-- Bounty
-  - Set Bounty Value
-  - Set Bounty
 - Send SMSs to Player
   - Custom SMS input
   - Send his SCID & IP
@@ -142,9 +139,6 @@ If you have a problem loading this script, have a look [**here**](#common-questi
   - Random Explosions
     - Select Explosion Type
   - Shake Cam
-- Sound-Features
-  - Sound Rape
-  - Garage Door Sound - Infinite Time
 - Chat Features
   - Echo Chat X times
   - Ultra Spammer
@@ -178,10 +172,8 @@ If you have a problem loading this script, have a look [**here**](#common-questi
   - Overwrite default Speedlimit
 - Bounty
   - Set Bounty after Death Value (0 - 10000$)
-  - Set Bounty after Death Toggle
-  - Anonymous Bounty Toggle
-  - Set Bounty Value (0 - 10000$)
-  - Set Bounty
+  - Give Bounty after Death Toggle (Anonymous or Named)
+  - Give Bounty (Custom Input, Anonymous or Named)
 - Script Events
   - Custom Script Events
     - Enter Custom Script Event with Parameters
@@ -336,8 +328,11 @@ If you have a problem loading this script, have a look [**here**](#common-questi
 - Clear Area
 - Auto Teleport to Waypoint
 - Fake Ban Screen
+- 500K Stealth Recovery
 - Swap Vehicle Seat
 - Stats
+  - Reset Orbital-Cannon Cooldown
+  - Disable Orbital-Cannon Cooldown
   - Fill Snacks and Armor
   - Set KD(Kills/Deaths)
   - Unlock Fast-Run Ability
@@ -481,14 +476,14 @@ _2t1s_se_custom = {
 
 ### Attacker / Assassin PEDs
 
-Edit the `_2t1s_ped_assassins` global variable.
+Edit the `_2t1s_ped_assassins` global variable. If you dont provide a weapon hash, the peds weapon will be a Combat MG Mk II
 
 ```lua
 _2t1s_ped_assassins = {
---  {"Attacker Name", ped_Hash, ped_Type},
-    {"Cop", 0x5E3DA4A4, 6},
-    {"FIB", 0x5CDEF405, 6},
-    {"Juggernaut", 0x90EF5134, 4},
+--  {"Attacker Name", ped_Hash, ped_Type, weapon_Hash(optional)},
+    {"Cop", 0x5E3DA4A4, 6, 0x1D073A89},
+    {"FIB", 0x5CDEF405, 6, 0x2BE6766B},
+    {"Juggernaut", 0x90EF5134, 4, 0x42BF8A85},
     {"Bigfoot", 0x61D4C771, 28},
 }
 ```
@@ -752,10 +747,4 @@ _2t1s_weapons = {
 
 ## Changelog
 
-### 2021-08-22
-
-- added stuff
-- changed stuff
-- removed stuff
-
-would be too much to list it here
+see [**releases**](https://github.com/DemonKiya/2Take1Script-Revive/releases/)
